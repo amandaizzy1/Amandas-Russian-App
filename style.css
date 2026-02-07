@@ -299,13 +299,6 @@ button:active{transform:scale(.98)}
   gap: 12px;
 }
 
-.statsTop{
-  display:flex;
-  gap: 12px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
 .levelPop{ animation: levelPop 520ms ease; }
 .shake{ animation: shake 420ms ease; }
 
