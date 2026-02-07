@@ -1,14 +1,11 @@
-// Russian Sentence Trainer — script.js (v4)
-// UI: hidden Data section, big Duolingo-style level at top, adjustable daily goal.
-// Motivation: streak, daily XP, session XP, ring + bars, level-up toast.
-// Mastery: new/seen/learned/mastered.
+// Russian Sentence Trainer — Full polished build (GitHub-ready)
 
-const LS_KEY = "ru_sentence_trainer_v4";
+const LS_KEY = "ru_sentence_trainer_polished_v1";
 
 // XP tuning
 const XP = { perfect: 12, good: 10, hard: 8, miss: 0 };
 
-// Levels based on learned count (learned + mastered) — includes A0 start.
+// Levels based on learned count (learned + mastered)
 const LEVELS = [
   { name: "A0", learned: 0 },
   { name: "A1", learned: 250 },
@@ -87,7 +84,6 @@ function defaultProgress() {
     lapses: 0,
     dueAt: 0,
     lastSeenAt: 0,
-
     correctStreak: 0,
     bestStreak: 0,
     lastAttemptWasCorrect: false
@@ -97,8 +93,6 @@ function defaultProgress() {
 function defaultMeta() {
   return {
     importedAt: 0,
-
-    // motivation
     streak: 0,
     lastStudyYmd: "",
     dailyXP: 0,
@@ -106,8 +100,6 @@ function defaultMeta() {
     dailyGoalXP: 80,
     totalXP: 0,
     lastLevel: "A0",
-
-    // session
     sessionXP: 0,
     sessionGoalXP: 40
   };
@@ -129,7 +121,6 @@ function loadState() {
     return { items: {}, order: [], meta: defaultMeta() };
   }
 }
-
 function saveState(state) {
   localStorage.setItem(LS_KEY, JSON.stringify(state));
 }
@@ -149,8 +140,7 @@ function shuffle(arr) {
 }
 
 function chooseLessonItems(state, lessonSize, newPerLesson) {
-  const allIds = state.order.slice();
-  const allItems = allIds.map(id => state.items[id]).filter(Boolean);
+  const allItems = state.order.map(id => state.items[id]).filter(Boolean);
 
   const dueItems = allItems
     .filter(x => x.progress.dueAt > 0 && x.progress.dueAt <= nowMs())
@@ -170,14 +160,8 @@ function chooseLessonItems(state, lessonSize, newPerLesson) {
       .sort((a, b) => a.progress.dueAt - b.progress.dueAt)
       .slice(0, remaining);
   }
-
   return shuffle([...chosenDue, ...chosenNew, ...nearDue]).slice(0, lessonSize);
 }
-
-const PREPOSITIONS = new Set([
-  "в","на","с","со","к","ко","из","у","по","о","об","обо","за","для","про","при",
-  "без","над","под","перед","после","до","от","через","между"
-]);
 
 function buildWordBank(requiredTiles, globalDistractors, maxDistractors) {
   const requiredSet = new Set(requiredTiles);
@@ -186,7 +170,7 @@ function buildWordBank(requiredTiles, globalDistractors, maxDistractors) {
   return shuffle([...requiredTiles, ...distractors]);
 }
 
-// grading: same words, flexible order
+// Grading: must use the same words (multiset). Only word order can vary.
 function gradeOrderFlexible(userTiles, canonicalTokens) {
   const user = userTiles.slice();
   const canon = canonicalTokens.slice();
@@ -210,29 +194,6 @@ function gradeOrderFlexible(userTiles, canonicalTokens) {
   const userStr = user.join(" ");
   if (userStr === canonStr) return { ok: true, quality: "perfect", note: "Exact order." };
 
-  const allowMove = new Set(["вообще-то","действительно","просто","уже","ещё","всегда","никогда","сейчас","потом","теперь"]);
-  const userNoMove = user.filter(x => !allowMove.has(x));
-  const canonNoMove = canon.filter(x => !allowMove.has(x));
-  if (userNoMove.join(" ") === canonNoMove.join(" ")) {
-    return { ok: true, quality: "good", note: "Order ok (only adverbs moved)." };
-  }
-
-  // adjacency nudge
-  const adjacencyPairs = [];
-  for (let i = 0; i < canon.length - 1; i++) {
-    const a = canon[i], b = canon[i + 1];
-    if (a === "не") adjacencyPairs.push([a, b]);
-    if (PREPOSITIONS.has(a)) adjacencyPairs.push([a, b]);
-    if (a === "только" && b === "что") adjacencyPairs.push([a, b]);
-  }
-  for (const [a, b] of adjacencyPairs) {
-    let okPair = false;
-    for (let i = 0; i < user.length - 1; i++) {
-      if (user[i] === a && user[i + 1] === b) { okPair = true; break; }
-    }
-    if (!okPair) return { ok: true, quality: "hard", note: `Correct, but keep "${a} ${b}" together.` };
-  }
-
   return { ok: true, quality: "hard", note: "Correct (different order accepted)." };
 }
 
@@ -249,19 +210,6 @@ function updateSrs(progress, resultQuality) {
     progress.intervalDays = progress.intervalDays === 0
       ? 1
       : Math.max(1, Math.round(progress.intervalDays * 2.6 * progress.ease / 2.2));
-    progress.dueAt = nowMs() + daysToMs(progress.intervalDays);
-    return;
-  }
-
-  if (resultQuality === "good") {
-    progress.reps += 1;
-    progress.correctStreak += 1;
-    progress.bestStreak = Math.max(progress.bestStreak, progress.correctStreak);
-    progress.lastAttemptWasCorrect = true;
-
-    progress.intervalDays = progress.intervalDays === 0
-      ? 1
-      : Math.max(1, Math.round(progress.intervalDays * 2.2));
     progress.dueAt = nowMs() + daysToMs(progress.intervalDays);
     return;
   }
@@ -298,7 +246,7 @@ function speakRu(text) {
   window.speechSynthesis.speak(u);
 }
 
-// sound effects (oscillator beeps)
+// Sound effects (oscillator)
 let audioCtx = null;
 function ensureAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -325,7 +273,7 @@ function sfx(kind) {
   if (kind === "level") { beep(523, 70, "sine", 0.03); setTimeout(()=>beep(659, 80, "sine", 0.03), 80); setTimeout(()=>beep(784, 120, "sine", 0.03), 170); return; }
 }
 
-// mastery + stats
+// Mastery states
 function masteryState(p) {
   if (p.reps === 0) return "new";
   if (p.correctStreak >= 3) return "mastered";
@@ -366,7 +314,7 @@ function nextLevel(learnedTotal) {
   return null;
 }
 
-// UI helpers
+// UI widgets
 function toast(text, big = false) {
   const t = document.createElement("div");
   t.className = "toast" + (big ? " big" : "");
@@ -449,7 +397,9 @@ function ringSvg(pct, labelTop, labelBottom) {
   return wrap;
 }
 
-// motivation bookkeeping
+// Motivation bookkeeping
+let state = loadState();
+
 function resetDailyIfNeeded() {
   const today = ymdLocal();
   if (state.meta.dailyXPDate !== today) {
@@ -496,7 +446,6 @@ function maybeLevelUp(learnedTotal) {
   const cur = currentLevel(learnedTotal);
   if (state.meta.lastLevel !== cur.name) {
     state.meta.lastLevel = cur.name;
-    // Only toast on real progress beyond A0
     if (cur.name !== "A0") return cur.name;
   }
   return "";
@@ -504,14 +453,12 @@ function maybeLevelUp(learnedTotal) {
 
 // DOM
 const el = {
-  // data import (hidden)
   dataInput: document.getElementById("dataInput"),
   btnImport: document.getElementById("btnImport"),
   importStatus: document.getElementById("importStatus"),
   btnReset: document.getElementById("btnReset"),
   btnLoadSample: document.getElementById("btnLoadSample"),
 
-  // lesson
   lessonSize: document.getElementById("lessonSize"),
   newPerLesson: document.getElementById("newPerLesson"),
   btnStart: document.getElementById("btnStart"),
@@ -528,10 +475,8 @@ const el = {
   btnNext: document.getElementById("btnNext"),
   btnSpeak: document.getElementById("btnSpeak"),
 
-  // stats
   stats: document.getElementById("stats"),
 
-  // HUD
   hudLevel: document.getElementById("hudLevel"),
   hudSub: document.getElementById("hudSub"),
   hudStreak: document.getElementById("hudStreak"),
@@ -541,12 +486,9 @@ const el = {
   hudDue: document.getElementById("hudDue"),
   ringHolder: document.getElementById("dailyRingHolder"),
 
-  // goal control
   dailyGoalInput: document.getElementById("dailyGoalInput"),
   btnSetGoal: document.getElementById("btnSetGoal")
 };
-
-let state = loadState();
 
 let lesson = {
   items: [],
@@ -566,9 +508,42 @@ function setFeedback(text, tone = "muted") {
   el.feedback.textContent = text;
 }
 
+function globalDistractorPool() {
+  const all = Object.values(state.items);
+  const set = new Set();
+  for (const it of all) for (const t of it.ruTokens) if (t) set.add(t);
+  return Array.from(set);
+}
+
+function importFromTextarea(text) {
+  const lines = text.split("\n");
+  const items = [];
+  for (const line of lines) {
+    const parsed = parseLine(line);
+    if (!parsed) continue;
+    items.push(buildItem(parsed.en, parsed.ru));
+  }
+  if (items.length === 0) return { ok: false, msg: "No valid lines found." };
+
+  for (const it of items) {
+    if (!state.items[it.id]) {
+      state.items[it.id] = it;
+      state.order.push(it.id);
+    } else {
+      // Update text, keep progress
+      state.items[it.id].en = it.en;
+      state.items[it.id].ru = it.ru;
+      state.items[it.id].ruTokens = it.ruTokens;
+      if (!state.items[it.id].progress) state.items[it.id].progress = defaultProgress();
+    }
+  }
+  state.meta.importedAt = nowMs();
+  saveState(state);
+  return { ok: true, msg: `Imported ${items.length} lines.` };
+}
+
 function renderHUD() {
   resetDailyIfNeeded();
-
   const st = statsFromState(state);
   const cur = currentLevel(st.learnedTotal);
 
@@ -581,23 +556,21 @@ function renderHUD() {
   el.hudTotalXP.textContent = String(state.meta.totalXP || 0);
   el.hudDue.textContent = String(st.due);
 
-  // goal input should reflect current saved goal
   el.dailyGoalInput.value = String(state.meta.dailyGoalXP ?? 80);
 
-  // ring
   el.ringHolder.innerHTML = "";
   const goal = Number(state.meta.dailyGoalXP || 0);
 
   if (goal > 0) {
     const pct = Math.round((state.meta.dailyXP / goal) * 100);
-    const ring = ringSvg(
-      pct,
-      "Daily goal",
-      pct >= 100 ? "Goal complete" : `${Math.max(0, goal - state.meta.dailyXP)} XP to go`
+    el.ringHolder.appendChild(
+      ringSvg(
+        pct,
+        "Daily goal",
+        pct >= 100 ? "Goal complete" : `${Math.max(0, goal - state.meta.dailyXP)} XP to go`
+      )
     );
-    el.ringHolder.appendChild(ring);
   } else {
-    // no ring when goal == 0
     const div = document.createElement("div");
     div.className = "muted";
     div.textContent = "Daily goal off";
@@ -611,7 +584,6 @@ function renderStats() {
   const next = nextLevel(st.learnedTotal);
 
   el.stats.innerHTML = "";
-
   const grid = document.createElement("div");
   grid.className = "statsGrid";
 
@@ -655,40 +627,6 @@ function renderStats() {
   grid.appendChild(lvlLine);
 
   el.stats.appendChild(grid);
-}
-
-function importFromTextarea(text) {
-  const lines = text.split("\n");
-  const items = [];
-  for (const line of lines) {
-    const parsed = parseLine(line);
-    if (!parsed) continue;
-    items.push(buildItem(parsed.en, parsed.ru));
-  }
-  if (items.length === 0) return { ok: false, msg: "No valid lines found." };
-
-  for (const it of items) {
-    if (!state.items[it.id]) {
-      state.items[it.id] = it;
-      state.order.push(it.id);
-    } else {
-      state.items[it.id].en = it.en;
-      state.items[it.id].ru = it.ru;
-      state.items[it.id].ruTokens = it.ruTokens;
-      if (!state.items[it.id].progress) state.items[it.id].progress = defaultProgress();
-    }
-  }
-
-  state.meta.importedAt = nowMs();
-  saveState(state);
-  return { ok: true, msg: `Imported ${items.length} lines.` };
-}
-
-function globalDistractorPool() {
-  const all = Object.values(state.items);
-  const set = new Set();
-  for (const it of all) for (const t of it.ruTokens) if (t) set.add(t);
-  return Array.from(set);
 }
 
 function startLesson() {
@@ -761,6 +699,7 @@ function renderBank() {
         if (currentUsedNow >= requiredCountNow) return;
         lesson.chosen.push(t);
       } else {
+        // distractor chosen -> will fail grading, but allowed to click
         lesson.chosen.push(t);
       }
       renderBank();
@@ -796,7 +735,6 @@ function submitAnswer() {
   lesson.submitted = true;
 
   const p = lesson.current.progress || defaultProgress();
-  const beforeLevel = currentLevel(statsFromState(state).learnedTotal).name;
   const beforeMastery = masteryState(p);
 
   const result = gradeOrderFlexible(lesson.chosen, lesson.current.ruTokens);
@@ -815,6 +753,7 @@ function submitAnswer() {
     return;
   }
 
+  // Correct
   const xpEarned = XP[result.quality] ?? 8;
   awardXP(xpEarned);
 
@@ -824,7 +763,6 @@ function submitAnswer() {
 
   const st = statsFromState(state);
   const levelToast = maybeLevelUp(st.learnedTotal);
-
   const afterMastery = masteryState(p);
 
   const lines = [];
@@ -856,17 +794,11 @@ function submitAnswer() {
   renderStats();
   renderHUD();
 
-  // daily goal completion toast (only when goal > 0)
+  // daily goal completion toast
   if ((state.meta.dailyGoalXP || 0) > 0) {
     const prevPct = Math.round(((state.meta.dailyXP - xpEarned) / state.meta.dailyGoalXP) * 100);
     const pct = Math.round((state.meta.dailyXP / state.meta.dailyGoalXP) * 100);
     if (prevPct < 100 && pct >= 100) toast("✨ Daily goal complete!", true);
-  }
-
-  // if you crossed a level boundary (visual check)
-  const afterLevel = currentLevel(st.learnedTotal).name;
-  if (afterLevel !== beforeLevel) {
-    el.hudLevel.textContent = afterLevel;
   }
 }
 
@@ -884,7 +816,7 @@ function nextPrompt() {
   renderHUD();
 }
 
-// events
+// Wire up
 el.btnImport.addEventListener("click", () => {
   const res = importFromTextarea(el.dataInput.value);
   el.importStatus.textContent = res.msg;
@@ -934,42 +866,7 @@ el.btnLoadSample.addEventListener("click", () => {
 2\tI admit that I’m the one that did it. = Я признаю, что это я сделала.
 3\tI admit that there are a few problems. = Я признаю, что есть несколько проблем.
 4\tI agree with Tom one hundred percent. = Я согласна с Томом на сто процентов.
-5\tI agree with everything you just said. = Я согласна со всем, что ты только что сказала.
-6\tI agree with your opinion about… = Я согласна с твоим мнением о…
-7\tI already have plans for this weekend. = У меня уже есть планы на эти выходные.
-8\tI already told you that it won't work. = Я уже сказала тебе, что это не сработает.
-9\tI always carry a bottle of water with me. = Я всегда ношу с собой бутылку воды.
-10\tI always get those two names confused. = Я всегда путаю эти два имени.
-11\tI really want to live here forever. = Я действительно хочу жить здесь вечно.
-12\tWhat is your favorite color? = Какой твой любимый цвет?
-13\tMy favorite color is black. = Мой любимый цвет чёрный.
-14\tYou found me (masc.) = Ты нашёл меня
-15\tI found you = Я нашла тебя
-16\tWhy are you learning Russian? = Почему ты учишь русский?
-17\tI’m learning Russian because… = Я учу русский потому что…
-18\tI have no idea = Я понятия не имею.
-19\tI don't know how to say that in Russian. = Я не знаю, как сказать это по русски.
-20\tI love that song. = Я люблю эту песню.
-21\tCan I ask you a question? = Могу я задать тебе вопрос?
-22\tI hate this city. = Я ненавижу этот город.
-23\tI hated high school. College is so much better for me. = Я ненавидела среднюю школу. Колледж для меня намного лучше.
-24\tWhat university do you study at? = В каком университете ты учишься?
-25\tMy birthday is in August. = Мой день рождения в августе.
-26\tI was born in Atlanta, but now I live in Los Angeles. = Я родилась в Атланте, но сейчас живу в Лос Анджелесе.
-27\tI sound like a robot. = Я говорю как робот.
-28\tI go to university here. = Я учусь здесь в университете.
-29\tI think Russian women are especially beautiful. = Я думаю, что русские женщины особенно красивы.
-30\tThat's all about me. = Это всё обо мне
-31\tWhat's your major? = Какая у тебя специальность?
-32\tI miss you. = Я скучаю по тебе.
-33\tI'll pay for everything. = Я заплачу за все.
-34\tI don’t agree that = Я не согласна, что…
-35\tI feel so good = Мне так хорошо.
-36\tI want to go home = Я хочу домой.
-37\tI’m sorry I’m late (frm.) = Извините, я опоздала.
-38\tI can’t hear you = Я тебя не слышу.
-39\tHold on = Подожди.
-40\tI can’t find my package. = Я не могу найти свою посылку.`;
+5\tI agree with everything you just said. = Я согласна со всем, что ты только что сказала.`;
   el.importStatus.textContent = "Sample set loaded. Click Import Sentences.";
 });
 
@@ -984,6 +881,6 @@ el.btnSetGoal.addEventListener("click", () => {
   renderStats();
 });
 
-// initial render
+// Initial render
 renderStats();
 renderHUD();
