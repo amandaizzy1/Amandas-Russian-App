@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Russian Trainer</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+<div class="wrap">
+
+  <!-- ===== TOP HUD ===== -->
+  <div class="hud">
+    <div>
+      <div id="hudLevel" class="hudLevel">A0</div>
+      <div id="hudSub" class="hudSub">0 learned • 0 mastered</div>
+
+      <div class="hudRow">
+        <div class="pill">🔥 <b id="hudStreak">0</b></div>
+        <div class="pill">⚡ <b id="hudDailyXP">0</b>/<span id="hudDailyGoal">80</span></div>
+        <div class="pill">⭐ <b id="hudTotalXP">0</b></div>
+        <div class="pill">📦 <b id="hudDue">0</b></div>
+      </div>
+    </div>
+
+    <div class="goalBox">
+      <div class="goalLabel">Daily goal</div>
+      <div class="goalRow">
+        <input id="dailyGoalInput" type="number" value="80"/>
+        <button id="btnSetGoal">Set</button>
+      </div>
+      <div class="muted small">0 = off</div>
+    </div>
+  </div>
+
+  <h1>Russian Sentence Trainer</h1>
+
+  <!-- ===== LESSON ===== -->
+  <div class="card">
+    <div class="row">
+      <label>Lesson size</label>
+      <input id="lessonSize" type="number" value="20"/>
+
+      <label>New</label>
+      <input id="newPerLesson" type="number" value="10"/>
+
+      <button id="btnStart">Start Lesson</button>
+      <button id="btnReset">Reset</button>
+      <button id="btnLoadSample">Sample</button>
+    </div>
+
+    <div id="lessonStatus" class="muted"></div>
+
+    <div id="promptArea" class="hidden">
+      <div id="promptEn" class="prompt"></div>
+
+      <div id="answerLine" class="answer"></div>
+
+      <div class="row">
+        <button id="btnUndo">Undo</button>
+        <button id="btnClear">Clear</button>
+        <button id="btnSubmit">Submit</button>
+      </div>
+
+      <div id="bank" class="bank"></div>
+
+      <div id="feedback" class="feedback"></div>
+
+      <div class="row">
+        <button id="btnNext">Next</button>
+        <button id="btnSpeak">🔊</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN (HIDDEN) ===== -->
+  <details class="card">
+    <summary>Admin / Data</summary>
+
+    <textarea id="dataInput" rows="10"></textarea>
+
+    <div class="row">
+      <button id="btnImport">Import Sentences</button>
+      <span id="importStatus"></span>
+    </div>
+  </details>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
