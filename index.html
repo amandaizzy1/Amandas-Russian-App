@@ -1,93 +1,104 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Russian Trainer</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Russian Sentence Trainer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <!-- Top HUD -->
+      <div class="hud">
+        <div class="hudLeft">
+          <div id="hudLevel" class="hudLevel">A0</div>
+          <div id="hudSub" class="hudSub">0 learned • 0 mastered</div>
 
-<body>
-<div class="wrap">
+          <div class="hudPills">
+            <div class="pill"><span>🔥</span> Streak <b id="hudStreak">0</b></div>
+            <div class="pill"><span>⚡</span> Daily XP <b id="hudDailyXP">0</b> / <span id="hudDailyGoal">80</span></div>
+            <div class="pill"><span>⭐</span> Total XP <b id="hudTotalXP">0</b></div>
+            <div class="pill"><span>📦</span> Due <b id="hudDue">0</b></div>
+          </div>
+        </div>
 
-  <!-- ===== TOP HUD ===== -->
-  <div class="hud">
-    <div>
-      <div id="hudLevel" class="hudLevel">A0</div>
-      <div id="hudSub" class="hudSub">0 learned • 0 mastered</div>
+        <div class="hudRight">
+          <div class="goalBox">
+            <div class="goalLabel">Daily goal</div>
+            <div class="goalRow">
+              <input id="dailyGoalInput" type="number" min="0" step="5" value="80" />
+              <button id="btnSetGoal">Set</button>
+            </div>
+            <div class="goalHint muted">Set to 0 to turn off goals.</div>
+          </div>
 
-      <div class="hudRow">
-        <div class="pill">🔥 <b id="hudStreak">0</b></div>
-        <div class="pill">⚡ <b id="hudDailyXP">0</b>/<span id="hudDailyGoal">80</span></div>
-        <div class="pill">⭐ <b id="hudTotalXP">0</b></div>
-        <div class="pill">📦 <b id="hudDue">0</b></div>
+          <div class="ringHolder" id="dailyRingHolder"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="goalBox">
-      <div class="goalLabel">Daily goal</div>
-      <div class="goalRow">
-        <input id="dailyGoalInput" type="number" value="80"/>
-        <button id="btnSetGoal">Set</button>
-      </div>
-      <div class="muted small">0 = off</div>
-    </div>
-  </div>
-
-  <h1>Russian Sentence Trainer</h1>
-
-  <!-- ===== LESSON ===== -->
-  <div class="card">
-    <div class="row">
-      <label>Lesson size</label>
-      <input id="lessonSize" type="number" value="20"/>
-
-      <label>New</label>
-      <input id="newPerLesson" type="number" value="10"/>
-
-      <button id="btnStart">Start Lesson</button>
-      <button id="btnReset">Reset</button>
-      <button id="btnLoadSample">Sample</button>
-    </div>
-
-    <div id="lessonStatus" class="muted"></div>
-
-    <div id="promptArea" class="hidden">
-      <div id="promptEn" class="prompt"></div>
-
-      <div id="answerLine" class="answer"></div>
+      <h1>Russian Sentence Trainer</h1>
 
       <div class="row">
-        <button id="btnUndo">Undo</button>
-        <button id="btnClear">Clear</button>
-        <button id="btnSubmit">Submit</button>
+        <button id="btnReset">Reset Progress</button>
+        <button id="btnLoadSample">Load Sample Set</button>
       </div>
 
-      <div id="bank" class="bank"></div>
+      <div class="card">
+        <h2>Lesson</h2>
+        <div class="row">
+          <label>Lesson size</label>
+          <input id="lessonSize" type="number" min="5" max="50" value="20" />
+          <label>New per lesson</label>
+          <input id="newPerLesson" type="number" min="0" max="50" value="10" />
+          <button id="btnStart">Start Lesson</button>
+        </div>
 
-      <div id="feedback" class="feedback"></div>
+        <div id="lessonStatus" class="muted"></div>
 
-      <div class="row">
-        <button id="btnNext">Next</button>
-        <button id="btnSpeak">🔊</button>
+        <div id="promptArea" class="promptArea hidden">
+          <div class="promptEn" id="promptEn"></div>
+
+          <div class="answerLine" id="answerLine"></div>
+
+          <div class="row">
+            <button id="btnUndo">Undo</button>
+            <button id="btnClear">Clear</button>
+            <button id="btnSubmit">Submit</button>
+          </div>
+
+          <h3>Word bank</h3>
+          <div class="bank" id="bank"></div>
+
+          <div id="feedback" class="feedback"></div>
+          <div class="row">
+            <button id="btnNext">Next</button>
+            <button id="btnSpeak">Play Russian Audio</button>
+          </div>
+        </div>
       </div>
+
+      <div class="card">
+        <h2>Stats</h2>
+        <div id="stats"></div>
+      </div>
+
+      <!-- Hidden by default -->
+      <details class="card">
+        <summary class="summary">Admin / Data (click to expand)</summary>
+
+        <p class="muted" style="margin-top:10px">
+          Paste lines like: English = Russian. This is hidden so it doesn’t clutter your learning screen.
+        </p>
+
+        <textarea id="dataInput" rows="10" spellcheck="false"></textarea>
+
+        <div class="row">
+          <button id="btnImport">Import Sentences</button>
+          <span id="importStatus"></span>
+        </div>
+      </details>
     </div>
-  </div>
 
-  <!-- ===== ADMIN / DATA (HIDDEN) ===== -->
-  <details class="card">
-    <summary>Admin / Data</summary>
-
-    <textarea id="dataInput" rows="10"></textarea>
-
-    <div class="row">
-      <button id="btnImport">Import Sentences</button>
-      <span id="importStatus"></span>
-    </div>
-  </details>
-
-</div>
-
-<script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
