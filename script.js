@@ -40,6 +40,7 @@ function normalizeRuForMatch(s) {
   return s
     .toLowerCase()
     .replaceAll("ё", "е")
+    .replace(/[-–—]/g, " ")
     .replace(/[.,!?;:()"“”«»]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -487,7 +488,9 @@ const el = {
   ringHolder: document.getElementById("dailyRingHolder"),
 
   dailyGoalInput: document.getElementById("dailyGoalInput"),
-  btnSetGoal: document.getElementById("btnSetGoal")
+  btnSetGoal: document.getElementById("btnSetGoal"),
+
+adminList: document.getElementById("adminList")
 };
 
 let lesson = {
@@ -815,13 +818,66 @@ function nextPrompt() {
   renderStats();
   renderHUD();
 }
+function renderAdminList() {
+  if (!el.adminList) return;
 
+  el.adminList.innerHTML = "";
+
+  if (state.order.length === 0) {
+    el.adminList.innerHTML =
+      `<div class="muted">No imported sentences.</div>`;
+    return;
+  }
+
+  for (const id of state.order) {
+
+    const item = state.items[id];
+    if (!item) continue;
+
+    const box = document.createElement("div");
+    box.className = "adminItem";
+
+    box.innerHTML = `
+      <div class="adminItemHeader">
+Sentence ${state.order.indexOf(id)+1}
+</div>
+
+      <div class="muted">English</div>
+      <textarea rows="2">${item.en}</textarea>
+
+      <div class="muted">Russian</div>
+      <textarea rows="2">${item.ru}</textarea>
+
+      <button>Save Sentence</button>
+    `;
+
+    const areas = box.querySelectorAll("textarea");
+    const btn = box.querySelector("button");
+
+    btn.addEventListener("click", () => {
+
+      item.en = areas[0].value.trim();
+      item.ru = areas[1].value.trim();
+
+      item.ruTokens = splitTokensRu(item.ru);
+
+      saveState(state);
+
+      toast("Sentence saved. Progress preserved.", true);
+    });
+
+    el.adminList.appendChild(box);
+  }
+}
 // Wire up
 el.btnImport.addEventListener("click", () => {
   const res = importFromTextarea(el.dataInput.value);
+
   el.importStatus.textContent = res.msg;
+
   renderStats();
   renderHUD();
+  renderAdminList();
 });
 
 el.btnStart.addEventListener("click", startLesson);
@@ -851,13 +907,31 @@ el.btnSpeak.addEventListener("click", () => {
 });
 
 el.btnReset.addEventListener("click", () => {
+
+  const first =
+    confirm("Erase ALL progress?");
+
+  if (!first) return;
+
+  const second =
+    confirm("Final confirmation. This cannot be undone.");
+
+  if (!second) return;
+
   localStorage.removeItem(LS_KEY);
+
   state = loadState();
-  el.importStatus.textContent = "Progress reset.";
+
+  el.importStatus.textContent =
+    "Progress reset.";
+
   el.lessonStatus.textContent = "";
+
   el.promptArea.classList.add("hidden");
+
   renderStats();
   renderHUD();
+  renderAdminList();
 });
 
 el.btnLoadSample.addEventListener("click", () => {
@@ -884,3 +958,4 @@ el.btnSetGoal.addEventListener("click", () => {
 // Initial render
 renderStats();
 renderHUD();
+renderAdminList();
