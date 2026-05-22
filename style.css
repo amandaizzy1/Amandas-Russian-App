@@ -158,7 +158,7 @@ button{
   border-radius: 14px;
   padding: 10px 12px;
   cursor:pointer;
-  transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
+  transition: transform 120ms ease, filter 120ms ease, background 120ms ease, border-color 120ms ease;
   touch-action: manipulation;
 }
 
@@ -203,6 +203,7 @@ button:active{transform:scale(.98)}
 }
 
 .tile{
+  min-height:48px;
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.10);
   padding: 12px 14px;
@@ -333,4 +334,47 @@ button:active{transform:scale(.98)}
   .hudLevel{font-size:40px}
   .tile{font-size:17px; padding:13px 15px}
   input[type="number"]{width: 110px}
+}
+
+/* --- safer reset button --- */
+.dangerButton{
+  opacity:.65;
+  border-color:rgba(239,68,68,.25);
+}
+
+.dangerButton:hover{
+  opacity:1;
+  background:rgba(239,68,68,.12);
+  border-color:rgba(239,68,68,.55);
+}
+
+/* --- admin sentence editor --- */
+.adminList{
+  display:grid;
+  gap:12px;
+  margin-top:12px;
+}
+
+.adminItem{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  background:var(--card2);
+  transition:border-color .15s ease;
+}
+
+.adminItem:hover{
+  border-color:rgba(56,189,248,.35);
+}
+
+.adminItem textarea{
+  margin-top:8px;
+  min-height:70px;
+  resize:vertical;
+}
+
+.adminItemHeader{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:6px;
 }
